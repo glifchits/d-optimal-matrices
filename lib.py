@@ -15,7 +15,6 @@ def dft(seq, s):
 
 
 def psd(seq, s):
-    n = len(seq)
     d = dft(seq, s)
     return d.real ** 2 + d.imag ** 2
 
