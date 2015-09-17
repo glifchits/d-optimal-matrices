@@ -69,6 +69,15 @@ def check_psd_invariant(A, B):
     return True
 
 
+def check_sequence_invariants(A, B):
+    r = check_diophantine_invariant(aa, bb)
+    if not r: return False
+    r = check_paf_invariant(aa, bb)
+    if not r: return False
+    r = check_psd_invariant(aa, bb)
+    return r
+
+
 if __name__ == '__main__':
     N = int(sys.argv[1])
 
@@ -85,14 +94,9 @@ if __name__ == '__main__':
             percent_done = iterations / max_possible
             if iterations % iter_mod == 0:
                 print "Percent done: {0:>7.3f}%".format(percent_done * 100)
-            # check that a^2 + b^2 = 34
-            r = check_diophantine_invariant(aa, bb)
+            r = check_sequence_invariants(aa, bb)
             if not r: continue
-            # check the PAF invariant
-            r = check_paf_invariant(aa, bb)
-            if not r: continue
-            r = check_psd_invariant(aa, bb)
-            if not r: continue
+
             if max_possible > 10000000:
                 print "\nfound sequences!"
                 print "A:", seq_to_str(aa)
