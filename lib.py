@@ -9,7 +9,7 @@ def paf(seq, i):
 
 def dft(seq, s):
     n = len(seq)
-    omega = cmath.e ** ((2 * cmath.pi * 1j) / n)
+    omega = cmath.exp((2 * cmath.pi * 1j) / n)
     terms = [seq[k] * omega ** (k+s) for k in range(n)]
     return sum(terms)
 
