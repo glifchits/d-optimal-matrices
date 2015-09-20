@@ -4,6 +4,7 @@ from __future__ import division
 import sys
 import random
 import math
+from accounting import Accounting
 from lib import psd, paf
 
 
@@ -25,6 +26,7 @@ def all_possible_sequences(n):
 
 
 def check_diophantine_invariant(A, B):
+    Accounting.start_task('check_diophantine_invariant')
     v = len(A)
     a = sum(A)
     b = sum(B)
@@ -34,20 +36,29 @@ def check_diophantine_invariant(A, B):
     #   a^2 + b^2 = 4v−2,
     # where a and b are row sums of A and B
     #
+    Accounting.finish_task('check_diophantine_invariant')
     return equal(a ** 2 + b ** 2, 4*v - 2)
 
 
 def check_paf_invariant(A, B):
     # only check half of sequence due to PAF symmetry
+    Accounting.start_task('check_paf_invariant')
+    v = len(A)
     for s in xrange(1, len(A)//2):
+        Accounting.start_task('check_paf_invariant_step')
         paf_a = paf(A, s)
         paf_b = paf(B, s)
         if not equal(paf_a + paf_b, 2):
+            Accounting.finish_task('check_paf_invariant_step')
+            Accounting.finish_task('check_paf_invariant')
             return False
+        Accounting.finish_task('check_paf_invariant_step')
+    Accounting.finish_task('check_paf_invariant')
     return True
 
 
 def check_psd_invariant(A, B):
+    Accounting.start_task('check_psd_invariant')
     v = len(A)
     # p.280 in "New Results..."
     #
@@ -57,28 +68,44 @@ def check_psd_invariant(A, B):
     cond = 2*v - 2
 
     for k in xrange(1, v):
+        Accounting.start_task('check_psd_invariant_step')
         # non negativity of PSD. we can discard before computing PSD both times
         psd_a = psd(A, k)
         if psd_a > cond:
+            Accounting.finish_task('check_psd_invariant_step')
+            Accounting.finish_task('check_psd_invariant')
             return False
         psd_b = psd(B, k)
         if psd_b > cond:
+            Accounting.finish_task('check_psd_invariant_step')
+            Accounting.finish_task('check_psd_invariant')
             return False
         if not equal(psd_a + psd_b, cond):
+            Accounting.finish_task('check_psd_invariant_step')
+            Accounting.finish_task('check_psd_invariant')
             return False
+        Accounting.finish_task('check_psd_invariant_step')
+    Accounting.finish_task('check_psd_invariant')
     return True
 
 
 def check_sequence_invariants(A, B):
+    Accounting.start_task('check_sequence_invariants')
     r = check_diophantine_invariant(aa, bb)
-    if not r: return False
+    if not r:
+        Accounting.finish_task('check_sequence_invariants')
+        return False
     r = check_paf_invariant(aa, bb)
-    if not r: return False
+    if not r:
+        Accounting.finish_task('check_sequence_invariants')
+        return False
     r = check_psd_invariant(aa, bb)
+    Accounting.finish_task('check_sequence_invariants')
     return r
 
 
 if __name__ == '__main__':
+    Accounting.start_task('_program')
     N = int(sys.argv[1])
 
     matches = []
@@ -90,21 +117,29 @@ if __name__ == '__main__':
 
     for aa in all_possible_sequences(N):
         for bb in all_possible_sequences(N):
+            Accounting.start_task('check_sequence')
             iterations += 1
             percent_done = iterations / max_possible
             if iterations % iter_mod == 0:
                 print "Percent done: {0:>7.3f}%".format(percent_done * 100)
             r = check_sequence_invariants(aa, bb)
-            if not r: continue
+            if not r:
+                Accounting.finish_task('check_sequence')
+                continue
 
             if max_possible > 10000000:
                 print "\nfound sequences!"
                 print "A:", seq_to_str(aa)
                 print "B:", seq_to_str(bb)
+                Accounting.finish_task('_program')
+                Accounting.finish_task('check_sequence')
+                Accounting.print_stats()
                 sys.exit()
             # all invariants hold!
             matches.append((aa, bb))
+            Accounting.finish_task('check_sequence')
 
+    Accounting.finish_task('_program')
     print "Done.\n"
 
     print "\bFound {0} sequences out of {1} possible.".format(len(matches), (2**N)**2)
@@ -115,3 +150,5 @@ if __name__ == '__main__':
     print "Random sequences"
     print "A:", seq_to_str(ex[0])
     print "B:", seq_to_str(ex[1])
+
+    Accounting.print_stats()
