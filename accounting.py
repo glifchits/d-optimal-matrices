@@ -1,6 +1,7 @@
 from __future__ import division
 
 import time
+import unittest
 
 
 class Task(object):
@@ -40,7 +41,6 @@ class Task(object):
             self.end_time == other.end_time
 
     def __add__(self, other):
-        print "add", self, other
         self.assert_same_type(other)
         return Task(self.name, 0, self.total_time + other.total_time)
 
@@ -82,3 +82,81 @@ class Accounting(object):
             print "  Avg time: {0:.4f}s".format(sum_task_list / len(task_list))
             print "  Total time spent: {0:.4f}s".format(sum_task_list)
             print ""
+
+
+class TestTask(unittest.TestCase):
+
+    def test_is_finished(self):
+        t = Task('test')
+        self.assertFalse(t.is_finished)
+        t.finish()
+        self.assertTrue(t.is_finished)
+
+    def test_total_time(self):
+        wait = 0.1
+        t = Task('test_total_time', 0, 2)
+        self.assertAlmostEqual(t.total_time, 2)
+
+    def test_add(self):
+        t1 = Task('test1', 0, 1)
+        t2 = Task('test1', 3, 4)
+        t3 = t1 + t2
+        self.assertEqual(t3.total_time, 2)
+
+    def test_add_floats(self):
+        t1 = Task('test', 0.001, 0.123)
+        t2 = Task('test', 0.333, 0.444)
+        t3 = t1 + t2
+        self.assertEqual(t3.total_time, 0.122+0.111)
+
+    def test_comparison_fail(self):
+        t1 = Task('type1', 0, 1)
+        t2 = Task('type2', 1, 3)
+        with self.assertRaises(AssertionError):
+            t1 < t2
+
+    def test_comparison(self):
+        taskname = 'test1'
+        t1 = Task(taskname, 0, 1)
+        t2 = Task(taskname, 0, 5)
+        self.assertTrue(t1 < t2)
+        self.assertFalse(t2 < t1)
+        self.assertFalse(t1 == t2)
+
+
+class TestAccounting(unittest.TestCase):
+
+    def setUp(self):
+        Accounting.bookkeeping = {}
+
+    def test_task_lifecycle(self):
+        # test parameters
+        taskname = 'test1'
+        wait = 0.1
+        # start test
+        Accounting.start_task(taskname)
+        time.sleep(wait)
+        Accounting.finish_task(taskname)
+        task = Accounting.bookkeeping[taskname][0]
+        self.assertTrue(task.is_finished)
+        self.assertAlmostEqual(task.total_time, wait, places=2)
+
+    def test_multiple_task_stats(self):
+        # test params
+        taskname = 'test2'
+        wait = 0.1
+        # start test
+        Accounting.start_task(taskname)
+        time.sleep(wait)
+        Accounting.finish_task(taskname)
+        Accounting.start_task(taskname)
+        time.sleep(wait)
+        Accounting.finish_task(taskname)
+        # check
+        tasks = Accounting.bookkeeping[taskname]
+        self.assertEqual(len(tasks), 2)
+        self.assertAlmostEqual(sum(t.total_time for t in tasks), 2 * wait)
+
+
+if __name__ == '__main__':
+    unittest.main()
