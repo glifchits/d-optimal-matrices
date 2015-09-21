@@ -6,9 +6,9 @@ import unittest
 
 class Task(object):
 
-    def __init__(self, name, start_time=time.time(), end_time=None):
+    def __init__(self, name, start_time=None, end_time=None):
         self.name = name
-        self.start_time = start_time
+        self.start_time = time.time() if start_time is None else start_time
         self.end_time = end_time
 
     def finish(self):
@@ -56,9 +56,10 @@ class Accounting(object):
 
     @classmethod
     def start_task(cls, task_name):
-        task_list = cls.bookkeeping.get(task_name, [])
-        task_list.append(Task(task_name))
-        cls.bookkeeping[task_name] = task_list
+        if task_name not in cls.bookkeeping:
+            cls.bookkeeping[task_name] = []
+        new_task = Task(task_name)
+        cls.bookkeeping[task_name].append(new_task)
 
     @classmethod
     def finish_task(cls, task_name):
@@ -82,6 +83,19 @@ class Accounting(object):
             print "  Avg time: {0:.4f}s".format(sum_task_list / len(task_list))
             print "  Total time spent: {0:.4f}s".format(sum_task_list)
             print ""
+
+
+# Number of digits to round to when checking time differences (in tests)
+TIME_PRECISION = 3
+
+def just_wait(seconds):
+    '''
+    An alternative to `time.sleep` that doesn't give up the thread so that we
+    can be more precise with time-based tests.
+    '''
+    start = time.time()
+    while start+seconds > time.time():
+        pass
 
 
 class TestTask(unittest.TestCase):
@@ -135,11 +149,11 @@ class TestAccounting(unittest.TestCase):
         wait = 0.1
         # start test
         Accounting.start_task(taskname)
-        time.sleep(wait)
+        just_wait(wait)
         Accounting.finish_task(taskname)
         task = Accounting.bookkeeping[taskname][0]
         self.assertTrue(task.is_finished)
-        self.assertAlmostEqual(task.total_time, wait, places=2)
+        self.assertAlmostEqual(task.total_time, wait, places=TIME_PRECISION)
 
     def test_multiple_task_stats(self):
         # test params
@@ -147,15 +161,16 @@ class TestAccounting(unittest.TestCase):
         wait = 0.1
         # start test
         Accounting.start_task(taskname)
-        time.sleep(wait)
+        just_wait(wait)
         Accounting.finish_task(taskname)
         Accounting.start_task(taskname)
-        time.sleep(wait)
+        just_wait(wait)
         Accounting.finish_task(taskname)
         # check
         tasks = Accounting.bookkeeping[taskname]
         self.assertEqual(len(tasks), 2)
-        self.assertAlmostEqual(sum(t.total_time for t in tasks), 2 * wait)
+        self.assertAlmostEqual(sum(t.total_time for t in tasks), 2 * wait,
+                places=TIME_PRECISION)
 
 
 if __name__ == '__main__':
