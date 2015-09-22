@@ -1,5 +1,6 @@
 from __future__ import division
 
+import math
 import time
 import unittest
 
@@ -95,6 +96,27 @@ class TaskList(object):
         for task in self.task_list:
             yield task
 
+    def get_min_time(self):
+        return self.min.total_time
+
+    def get_max_time(self):
+        return self.max.total_time
+
+    def get_total_time(self):
+        return self.sum
+
+    def get_avg_time(self):
+        return self.sum / len(self)
+
+    def get_std_dev(self):
+        avg = self.get_avg_time()
+        _sum = 0
+        _len = 0
+        for task in self:
+            _sum += (task.total_time - avg) ** 2
+            _len += 1
+        return math.sqrt(_sum / _len)
+
 
 class MetaAccounting(type):
 
@@ -128,10 +150,11 @@ class Accounting(object):
             task_list = bk[task]
             print "Task %s" % task
             print "  Times executed:", len(task_list)
-            print "  Min time: {0:.4f}s".format(task_list.min.total_time)
-            print "  Max time: {0:.4f}s".format(task_list.max.total_time)
-            print "  Avg time: {0:.4f}s".format(task_list.sum / len(task_list))
-            print "  Total time spent: {0:.4f}s".format(task_list.sum)
+            print "  Min time: {0:.4f}s".format(task_list.get_min_time())
+            print "  Max time: {0:.4f}s".format(task_list.get_max_time())
+            print "  Avg time: {0:.4f}s".format(task_list.get_avg_time())
+            print "  Total time: {0:.4f}s".format(task_list.get_total_time())
+            print "   Std dev: {0:.4f}s".format(task_list.get_std_dev())
             print ""
 
 
@@ -221,8 +244,8 @@ class TestTaskList(TestCase):
         just_wait(0.2)
         tasklist.finish_current_task()
         # check task values
-        self.assertTimeEqual(tasklist.min.total_time, 0.1)
-        self.assertTimeEqual(tasklist.max.total_time, 0.2)
+        self.assertTimeEqual(tasklist.get_min_time(), 0.1)
+        self.assertTimeEqual(tasklist.get_max_time(), 0.2)
         self.assertEqual(len(tasklist), 2)
 
     def test_sum(self):
@@ -236,9 +259,28 @@ class TestTaskList(TestCase):
         self.assertEqual(len(tasklist), iters)
         self.assertEqual(
             sum(t.total_time for t in tasklist),
-            tasklist.sum
+            tasklist.get_total_time()
         )
-        self.assertTimeEqual(tasklist.sum, wait * iters)
+        self.assertTimeEqual(tasklist.get_total_time(), wait * iters)
+
+    def test_avg(self):
+        tasklist = TaskList('testavg')
+        tasklist.start_new_task()
+        just_wait(0.1)
+        tasklist.finish_current_task()
+        tasklist.start_new_task()
+        just_wait(0.2)
+        tasklist.finish_current_task()
+        self.assertTimeEqual(tasklist.get_avg_time(), 0.15)
+
+    def test_std_dev(self):
+        tasklist = TaskList('test_stddev')
+        for i in range(10):
+            tasklist.start_new_task()
+            just_wait(0.01 * i)
+            tasklist.finish_current_task()
+        self.assertEqual(len(tasklist), 10)
+        self.assertTimeEqual(tasklist.get_std_dev(), 0.028722813232690138)
 
 
 class TestAccounting(TestCase):
@@ -285,10 +327,10 @@ class TestAccounting(TestCase):
         Accounting.finish_task('task1')
         self.assertEqual(len(Accounting['task1']), 2)
         self.assertEqual(len(Accounting['task2']), 1)
-        self.assertTimeEqual(Accounting['task1'].min.total_time, 0)
-        self.assertTimeEqual(Accounting['task1'].max.total_time, 0.3)
-        self.assertTimeEqual(Accounting['task2'].min.total_time, 0.2)
-        self.assertTimeEqual(Accounting['task2'].max.total_time, 0.2)
+        self.assertTimeEqual(Accounting['task1'].get_min_time(), 0)
+        self.assertTimeEqual(Accounting['task1'].get_max_time(), 0.3)
+        self.assertTimeEqual(Accounting['task2'].get_min_time(), 0.2)
+        self.assertTimeEqual(Accounting['task2'].get_max_time(), 0.2)
         with self.assertRaises(KeyError):
             Accounting['notataskname']
 
