@@ -2,10 +2,11 @@
 from __future__ import division
 
 import sys
-import random
 import math
-from accounting import Accounting
+import random
+import reporting
 from lib import psd, paf
+from accounting import Accounting
 
 
 def equal(a, b):
@@ -154,3 +155,5 @@ if __name__ == '__main__':
         print "B:", seq_to_str(ex[1])
 
     Accounting.print_stats()
+    stats = Accounting.stats_to_dict()
+    reporting.post_to_google_sheets(stats)

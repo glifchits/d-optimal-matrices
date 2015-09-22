@@ -143,6 +143,20 @@ class Accounting(object):
         task_list.finish_current_task()
 
     @classmethod
+    def stats_to_dict(cls):
+        d = {}
+        bk = cls.bookkeeping
+        for task in sorted(bk.keys()):
+            tasklist = bk[task]
+            d[task + ' count'] = len(tasklist)
+            d[task + ' min'] = tasklist.get_min_time()
+            d[task + ' max'] = tasklist.get_max_time()
+            d[task + ' avg'] = tasklist.get_avg_time()
+            d[task + ' std dev'] = tasklist.get_std_dev()
+            d[task + ' total'] = tasklist.get_total_time()
+        return d
+
+    @classmethod
     def print_stats(cls):
         print "\nExecution statistics:\n"
         bk = cls.bookkeeping
