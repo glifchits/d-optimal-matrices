@@ -50,24 +50,75 @@ class Task(object):
         )
 
 
+class TaskList(object):
+
+    def __init__(self, name):
+        self.name = name
+        self.running_task = None
+        self.task_list = []
+        self.min = None
+        self.max = None
+        self.sum = 0
+
+    def start_new_task(self):
+        self.running_task = Task(self.name)
+
+    def finish_current_task(self):
+        assert self.has_running_task, \
+            'Cannot finish task when no tasks are running'
+        self.running_task.finish()
+        self.task_list.append(self.running_task)
+        task_time = self.running_task.total_time
+        if not self.min or self.min.total_time > task_time:
+            self.min = self.running_task
+        if not self.max or self.max.total_time < task_time:
+            self.max = self.running_task
+        self.sum += task_time
+        self.running_task = None
+
+    @property
+    def has_running_task(self):
+        return True if self.running_task is not None else False
+
+    @property
+    def last_task(self):
+        if self.has_running_task:
+            return self.running_task
+        else:
+            return self.task_list[-1]
+
+    def __len__(self):
+        running = 1 if self.has_running_task else 0
+        return len(self.task_list) + running
+
+    def __iter__(self):
+        for task in self.task_list:
+            yield task
+
+
+class MetaAccounting(type):
+
+    def __getitem__(cls, task_name):
+        return cls.bookkeeping[task_name]
+
+
 class Accounting(object):
+
+    __metaclass__ = MetaAccounting
 
     bookkeeping = {}
 
     @classmethod
     def start_task(cls, task_name):
         if task_name not in cls.bookkeeping:
-            cls.bookkeeping[task_name] = []
-        new_task = Task(task_name)
-        cls.bookkeeping[task_name].append(new_task)
+            cls.bookkeeping[task_name] = TaskList(task_name)
+        cls.bookkeeping[task_name].start_new_task()
 
     @classmethod
     def finish_task(cls, task_name):
         assert task_name in cls.bookkeeping, 'No task `%s`' % task_name
         task_list = cls.bookkeeping[task_name]
-        last_task = task_list[-1]
-        assert not last_task.is_finished, 'No running task `%s`' % task_name
-        last_task.finish()
+        task_list.finish_current_task()
 
     @classmethod
     def print_stats(cls):
@@ -75,18 +126,14 @@ class Accounting(object):
         bk = cls.bookkeeping
         for task in sorted(bk.keys()):
             task_list = bk[task]
-            sum_task_list = sum(t.total_time for t in task_list)
             print "Task %s" % task
             print "  Times executed:", len(task_list)
-            print "  Min time: {0:.4f}s".format(min(task_list).total_time)
-            print "  Max time: {0:.4f}s".format(max(task_list).total_time)
-            print "  Avg time: {0:.4f}s".format(sum_task_list / len(task_list))
-            print "  Total time spent: {0:.4f}s".format(sum_task_list)
+            print "  Min time: {0:.4f}s".format(task_list.min.total_time)
+            print "  Max time: {0:.4f}s".format(task_list.max.total_time)
+            print "  Avg time: {0:.4f}s".format(task_list.sum / len(task_list))
+            print "  Total time spent: {0:.4f}s".format(task_list.sum)
             print ""
 
-
-# Number of digits to round to when checking time differences (in tests)
-TIME_PRECISION = 3
 
 def just_wait(seconds):
     '''
@@ -98,7 +145,15 @@ def just_wait(seconds):
         pass
 
 
-class TestTask(unittest.TestCase):
+class TestCase(unittest.TestCase):
+    # Number of digits to round to when checking time differences (in tests)
+    TIME_PRECISION = 3
+
+    def assertTimeEqual(self, a, b):
+        self.assertAlmostEqual(a, b, places=self.TIME_PRECISION)
+
+
+class TestTask(TestCase):
 
     def test_is_finished(self):
         t = Task('test')
@@ -109,7 +164,7 @@ class TestTask(unittest.TestCase):
     def test_total_time(self):
         wait = 0.1
         t = Task('test_total_time', 0, 2)
-        self.assertAlmostEqual(t.total_time, 2)
+        self.assertEqual(t.total_time, 2)
 
     def test_add(self):
         t1 = Task('test1', 0, 1)
@@ -137,8 +192,56 @@ class TestTask(unittest.TestCase):
         self.assertFalse(t2 < t1)
         self.assertFalse(t1 == t2)
 
+    def test_task_time_elapsed(self):
+        t = Task('timetest')
+        just_wait(0.03)
+        t.finish()
+        self.assertTimeEqual(t.total_time, 0.03)
 
-class TestAccounting(unittest.TestCase):
+
+class TestTaskList(TestCase):
+
+    def test_lifecycle(self):
+        tasklist = TaskList('test')
+        self.assertFalse(tasklist.has_running_task)
+        self.assertEqual(len(tasklist), 0)
+        tasklist.start_new_task()
+        self.assertTrue(tasklist.has_running_task)
+        self.assertEqual(len(tasklist), 1)
+        tasklist.finish_current_task()
+        self.assertFalse(tasklist.has_running_task)
+        self.assertEqual(len(tasklist), 1)
+
+    def test_min_and_max(self):
+        tasklist = TaskList('test2')
+        tasklist.start_new_task()
+        just_wait(0.1)
+        tasklist.finish_current_task()
+        tasklist.start_new_task()
+        just_wait(0.2)
+        tasklist.finish_current_task()
+        # check task values
+        self.assertTimeEqual(tasklist.min.total_time, 0.1)
+        self.assertTimeEqual(tasklist.max.total_time, 0.2)
+        self.assertEqual(len(tasklist), 2)
+
+    def test_sum(self):
+        tasklist = TaskList('test_sum')
+        wait = 0.05
+        iters = 5
+        for i in range(iters):
+            tasklist.start_new_task()
+            just_wait(wait)
+            tasklist.finish_current_task()
+        self.assertEqual(len(tasklist), iters)
+        self.assertEqual(
+            sum(t.total_time for t in tasklist),
+            tasklist.sum
+        )
+        self.assertTimeEqual(tasklist.sum, wait * iters)
+
+
+class TestAccounting(TestCase):
 
     def setUp(self):
         Accounting.bookkeeping = {}
@@ -151,9 +254,9 @@ class TestAccounting(unittest.TestCase):
         Accounting.start_task(taskname)
         just_wait(wait)
         Accounting.finish_task(taskname)
-        task = Accounting.bookkeeping[taskname][0]
+        task = Accounting.bookkeeping[taskname].last_task
         self.assertTrue(task.is_finished)
-        self.assertAlmostEqual(task.total_time, wait, places=TIME_PRECISION)
+        self.assertTimeEqual(task.total_time, wait)
 
     def test_multiple_task_stats(self):
         # test params
@@ -169,8 +272,25 @@ class TestAccounting(unittest.TestCase):
         # check
         tasks = Accounting.bookkeeping[taskname]
         self.assertEqual(len(tasks), 2)
-        self.assertAlmostEqual(sum(t.total_time for t in tasks), 2 * wait,
-                places=TIME_PRECISION)
+        self.assertTimeEqual(sum(t.total_time for t in tasks), 2 * wait)
+
+    def test_multiple_task_types(self):
+        Accounting.start_task('task1')
+        just_wait(0.1)
+        Accounting.start_task('task2')
+        just_wait(0.2)
+        Accounting.finish_task('task1')
+        Accounting.finish_task('task2')
+        Accounting.start_task('task1')
+        Accounting.finish_task('task1')
+        self.assertEqual(len(Accounting['task1']), 2)
+        self.assertEqual(len(Accounting['task2']), 1)
+        self.assertTimeEqual(Accounting['task1'].min.total_time, 0)
+        self.assertTimeEqual(Accounting['task1'].max.total_time, 0.3)
+        self.assertTimeEqual(Accounting['task2'].min.total_time, 0.2)
+        self.assertTimeEqual(Accounting['task2'].max.total_time, 0.2)
+        with self.assertRaises(KeyError):
+            Accounting['notataskname']
 
 
 if __name__ == '__main__':
