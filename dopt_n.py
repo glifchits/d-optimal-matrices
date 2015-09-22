@@ -113,14 +113,14 @@ if __name__ == '__main__':
     max_possible = (2**N)**2
 
     print "max_possible:", max_possible
-    iter_mod = math.floor(math.log(max_possible, 10)) * 4000
+    iter_mod = max_possible // 23
 
     for aa in all_possible_sequences(N):
         for bb in all_possible_sequences(N):
             Accounting.start_task('check_sequence')
             iterations += 1
             percent_done = iterations / max_possible
-            if iterations % iter_mod == 0:
+            if iterations % iter_mod == 0 or iterations == max_possible:
                 print "Percent done: {0:>7.3f}%".format(percent_done * 100)
             r = check_sequence_invariants(aa, bb)
             if not r:
