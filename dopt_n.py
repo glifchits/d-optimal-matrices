@@ -117,17 +117,21 @@ if __name__ == '__main__':
 
     for aa in all_possible_sequences(N):
         for bb in all_possible_sequences(N):
-            Accounting.start_task('check_sequence')
             iterations += 1
             percent_done = iterations / max_possible
             if iterations % iter_mod == 0 or iterations == max_possible:
                 print "Percent checked: {0:>7.3f}%    Matches found: {1}".format(
                     percent_done * 100, len(matches)
                 )
+
+            Accounting.start_task('check_sequence')
             r = check_sequence_invariants(aa, bb)
             if not r:
                 Accounting.finish_task('check_sequence')
                 continue
+            # all invariants hold!
+            matches.append((aa, bb))
+            Accounting.finish_task('check_sequence')
 
             if max_possible > 10000000:
                 print "\nfound sequences!"
@@ -137,9 +141,6 @@ if __name__ == '__main__':
                 Accounting.finish_task('check_sequence')
                 Accounting.print_stats()
                 sys.exit()
-            # all invariants hold!
-            matches.append((aa, bb))
-            Accounting.finish_task('check_sequence')
 
     Accounting.finish_task('_program')
     print "Done.\n"
