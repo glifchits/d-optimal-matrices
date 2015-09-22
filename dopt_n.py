@@ -121,7 +121,9 @@ if __name__ == '__main__':
             iterations += 1
             percent_done = iterations / max_possible
             if iterations % iter_mod == 0 or iterations == max_possible:
-                print "Percent done: {0:>7.3f}%".format(percent_done * 100)
+                print "Percent checked: {0:>7.3f}%    Matches found: {1}".format(
+                    percent_done * 100, len(matches)
+                )
             r = check_sequence_invariants(aa, bb)
             if not r:
                 Accounting.finish_task('check_sequence')
