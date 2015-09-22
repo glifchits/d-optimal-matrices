@@ -143,12 +143,11 @@ if __name__ == '__main__':
     print "Done.\n"
 
     print "\bFound {0} sequences out of {1} possible.".format(len(matches), (2**N)**2)
-    if len(matches) == 0:
-        sys.exit()
 
-    ex = random.choice(matches)
-    print "Random sequences"
-    print "A:", seq_to_str(ex[0])
-    print "B:", seq_to_str(ex[1])
+    if len(matches) > 0:
+        ex = random.choice(matches)
+        print "Random sequences"
+        print "A:", seq_to_str(ex[0])
+        print "B:", seq_to_str(ex[1])
 
     Accounting.print_stats()
