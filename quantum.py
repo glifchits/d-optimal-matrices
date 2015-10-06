@@ -51,8 +51,9 @@ class Q(object):
 
     def apply_gate(self, gate, qubit_idx):
         # construct a unitary transformation matrix of order `num_qubits`
-        qubits = self.num_qubits
-        gate_seq = (gate if i == qubit_idx else I for i in range(qubits))
+        # `qubits` is a reversed range since qubits index from right to left
+        qubits = reversed(range(self.num_qubits))
+        gate_seq = (gate if i == qubit_idx else I for i in qubits)
         unitary_transform = kron(*gate_seq)
         # multiply the state with this unitary transform
         new_state = unitary_transform * self.state
@@ -105,7 +106,9 @@ class Q(object):
         return str(self.state)
 
     def __eq__(self, other):
-        return (self.state == other.state).all()
+        # the matrix equality comparator doesn't allow rounding error.
+        # see docs.scipy.org/doc/numpy/reference/generated/numpy.allclose.html
+        return np.allclose(self.state, other.state)
 
 
 import unittest
@@ -178,6 +181,31 @@ class TestQ(unittest.TestCase):
         state = Q(kron(one, zero, one, one, one, zero, one))
         state = state.apply_cnot(2, 6)
         exp_state = Q(kron(zero, zero, one, one, one, zero, one))
+        self.assertEqual(state, exp_state)
+
+    def test_apply_gate_1(self):
+        state = Q(zero)
+        state = state.apply_gate(X, 0)
+        exp_state = Q(one)
+        self.assertEqual(state, exp_state)
+
+    def test_apply_gate_2(self):
+        state = Q(kron(zero, zero))
+        state = state.apply_gate(X, 0)
+        exp_state = Q(kron(zero, one))
+        self.assertEqual(state, exp_state)
+
+    def test_apply_gate_3(self):
+        state = Q(kron(one, zero))
+        state = state.apply_gate(X, 1)
+        exp_state = Q(kron(zero, zero))
+        self.assertEqual(state, exp_state)
+
+    def test_apply_gate_entangled_pair(self):
+        state = Q(kron(zero, zero))
+        state = state.apply_gate(H, 1)
+        state = state.apply_cnot(1, 0)
+        exp_state = Q(entangled_pair)
         self.assertEqual(state, exp_state)
 
 
