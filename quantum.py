@@ -34,11 +34,6 @@ def get_entangled_pair():
     return Q(entangled_pair)
 
 
-def gate(qubits, unitary, qidx):
-    gate_seq = (unitary if idx == qidx else I for idx in range(qubits))
-    return kron(*gate_seq)
-
-
 class Q(object):
 
     def __init__(self, state):
@@ -54,8 +49,14 @@ class Q(object):
         norm_new_state = 1/norm_factor * new_state
         return Q(norm_new_state)
 
-    def apply_gate(self, gate):
-        new_state = gate * self.state
+    def apply_gate(self, gate, qubit_idx):
+        # construct a unitary transformation matrix of order `num_qubits`
+        qubits = self.num_qubits
+        gate_seq = (gate if i == qubit_idx else I for i in range(qubits))
+        unitary_transform = kron(*gate_seq)
+        # multiply the state with this unitary transform
+        new_state = unitary_transform * self.state
+        # renormalize the state
         as_row = new_state.flatten().tolist()[0]
         norm_factor = sum(p**2 for p in as_row)
         norm_new_state = 1/norm_factor * new_state
