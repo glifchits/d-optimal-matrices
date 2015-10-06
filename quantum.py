@@ -113,6 +113,19 @@ import unittest
 
 class TestQ(unittest.TestCase):
 
+    def test_num_qubits_1(self):
+        state = Q(zero)
+        self.assertEqual(state.num_qubits, 1)
+
+    def test_num_qubits_2(self):
+        state = Q(kron(zero, zero))
+        self.assertEqual(state.num_qubits, 2)
+
+    def test_num_qubits_3(self):
+        QUBITS = 10
+        state = Q(kron(*(zero for x in range(QUBITS))))
+        self.assertEqual(state.num_qubits, QUBITS)
+
     def test_cnot_1(self):
         state = Q(kron(one, zero))
         state = state.apply_cnot(1, 0)
