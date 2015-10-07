@@ -84,6 +84,32 @@ class Q(object):
             swapped.add((qubit, target_idx))
         return Q(new_state)
 
+    def apply_func(self, func):
+        """
+        Apply `func` to the state. U|x>|y> = |x>|y ^ func(x)>
+        For an `n`-qubit state:
+          |x> (input) is assumed to be qubits 1-n
+          |y> (output) is assumed to be ONLY qubit 0
+        `func` must return either 0 or 1 for any input x
+        """
+        qubits = range(2 ** self.num_qubits)
+        state_matrix = self.state
+        swapped = set([])
+        for current_state in qubits:
+            x = current_state >> 1  # take bits 1-n
+            y = current_state & 1   # take just bit 0
+            fx = func(x)
+            assert fx == 0 or fx == 1, "f(x) must map to either {0, 1}"
+            yfunc = y ^ fx          # yfunc = y xor f(x)
+            # new state is the original `x` bits with the `y ^ f(x)` bit at end
+            new_state = (x << 1) + yfunc
+            if (current_state, new_state) not in swapped:
+                state_matrix = row_swap(state_matrix, current_state, new_state)
+                swapped.add((current_state, new_state))
+                swapped.add((new_state, current_state))
+        # resulting state is the one with swapped rows
+        return Q(state_matrix)
+
     @property
     def num_qubits(self):
         rows, cols = self.state.shape
@@ -207,6 +233,56 @@ class TestQ(unittest.TestCase):
         state = state.apply_cnot(1, 0)
         exp_state = Q(entangled_pair)
         self.assertEqual(state, exp_state)
+
+    def test_apply_func_1(self):
+        # f(x) = 0   for all x
+        func = lambda x: 0
+        state = Q(kron(zero, zero))
+        # apply func with input = 1, output = 0
+        state = state.apply_func(func)
+        # |0> |0 ^ f(0)> == |0>|0>
+        exp_state = Q(kron(zero, zero))
+        self.assertEqual(state, exp_state)
+
+    def test_apply_func_2(self):
+        func = lambda x: 1
+        state = Q(kron(one, one))
+        state = state.apply_func(func)
+        # |1>|1 ^ f(1)> == |1>|1 ^ 1> == |1>|0>
+        exp_state = Q(kron(one, zero))
+        self.assertEqual(state, exp_state)
+
+    def test_apply_func_3(self):
+        func = lambda x: 1
+        state = Q(kron(one, one, one, one))
+        state = state.apply_func(func)
+        # |111>|1 ^ f(111)> == |111>|1^1> == |1110>
+        exp_state = Q(kron(one, one, one, zero))
+        self.assertEqual(state, exp_state)
+
+    def test_apply_func_4(self):
+        func = lambda x: x % 2
+        state = Q(kron(one, one, zero))
+        state = state.apply_func(func)
+        # |11>|0 ^ f(10)> == |11>|0 ^ 1> == |111>
+        exp_state = Q(kron(one, one, one))
+        self.assertEqual(state, exp_state)
+
+    def test_apply_func_5(self):
+        func = lambda x: x % 2
+        state = Q(kron(one, one, one, zero, zero))
+        state = state.apply_func(func)
+        # |1110>|0 ^ f(1110)>
+        # = |1110>|0 ^ 0>
+        # = |11100>
+        exp_state = Q(kron(one, one, one, zero, zero))
+        self.assertEqual(state, exp_state)
+
+    def test_apply_invalid_func(self):
+        func = lambda x: 2
+        state = Q(kron(zero))
+        with self.assertRaises(AssertionError):
+            state.apply_func(func)
 
 
 if __name__ == '__main__':
