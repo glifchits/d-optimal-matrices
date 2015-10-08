@@ -17,6 +17,16 @@ def row_swap(matrix_to_swap, i, j):
     return matrix
 
 
+def to_row(matrix):
+    """
+    Converts a numpy column vector to a row (list). The array must have no more
+    than one column.
+    """
+    rows, cols = matrix.shape
+    assert cols == 1, "to_row can only flatten a matrix with one column width"
+    return matrix.transpose().tolist()[0]
+
+
 zero = np.matrix('1; 0')
 one = np.matrix('0; 1')
 
@@ -37,15 +47,13 @@ def get_entangled_pair():
 class Q(object):
 
     def __init__(self, state):
-        state_as_row = state.flatten().tolist()[0]
-        sq_mag = sum(abs(a)**2 for a in state_as_row)
+        sq_mag = sum(abs(a)**2 for a in to_row(state))
         assert abs(1-sq_mag) < 0.00001, "Squared magnitudes must sum to 1"
         self.state = state
 
     def __add__(self, other):
         new_state = self.state + other.state
-        as_row = new_state.flatten().tolist()[0]
-        norm_factor = sum(p**2 for p in as_row)
+        norm_factor = sum(p**2 for p in to_row(new_state))
         norm_new_state = 1/norm_factor * new_state
         return Q(norm_new_state)
 
@@ -61,8 +69,7 @@ class Q(object):
         # multiply the state with this unitary transform
         new_state = unitary * self.state
         # renormalize the state
-        as_row = new_state.flatten().tolist()[0]
-        norm_factor = sum(p**2 for p in as_row)
+        norm_factor = sum(p**2 for p in to_row(new_state))
         norm_new_state = 1/norm_factor * new_state
         return Q(norm_new_state)
 
@@ -121,7 +128,7 @@ class Q(object):
         return int(qubits)
 
     def measure(self):
-        amplitudes = self.state.flatten().tolist()[0]
+        amplitudes = to_row(self.state)
         probabilities = ((a**2).real for a in amplitudes)
         cumul = 0
         rand = random.random()
