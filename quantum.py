@@ -55,8 +55,11 @@ class Q(object):
         qubits = reversed(range(self.num_qubits))
         gate_seq = (gate if i == qubit_idx else I for i in qubits)
         unitary_transform = kron(*gate_seq)
+        return self.apply_unitary(unitary_transform)
+
+    def apply_unitary(self, unitary):
         # multiply the state with this unitary transform
-        new_state = unitary_transform * self.state
+        new_state = unitary * self.state
         # renormalize the state
         as_row = new_state.flatten().tolist()[0]
         norm_factor = sum(p**2 for p in as_row)
