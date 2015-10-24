@@ -14,8 +14,8 @@ def equal(a, b):
 
 
 def seq_to_str(seq):
-    c = map(lambda x: '+' if x == 1 else '-', seq)
-    return ''.join(c)
+    c = map(lambda x: ' 1' if x == 1 else '-1', seq)
+    return '[' + ', '.join(c) + ']'
 
 
 def all_possible_sequences(n):
@@ -149,7 +149,7 @@ if __name__ == '__main__':
 
     for idx, match in enumerate(matches):
         a, b = match
-        print "{:2}".format(idx), seq_to_str(a), seq_to_str(b)
+        print "{:2}".format(idx+1), seq_to_str(a), seq_to_str(b)
 
     Accounting.print_stats()
     stats = Accounting.stats_to_dict()
