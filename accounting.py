@@ -1,5 +1,7 @@
 from __future__ import division
 
+ACCOUNTING = False
+
 import math
 import time
 import unittest
@@ -132,15 +134,17 @@ class Accounting(object):
 
     @classmethod
     def start_task(cls, task_name):
-        if task_name not in cls.bookkeeping:
-            cls.bookkeeping[task_name] = TaskList(task_name)
-        cls.bookkeeping[task_name].start_new_task()
+        if ACCOUNTING:
+            if task_name not in cls.bookkeeping:
+                cls.bookkeeping[task_name] = TaskList(task_name)
+            cls.bookkeeping[task_name].start_new_task()
 
     @classmethod
     def finish_task(cls, task_name):
-        assert task_name in cls.bookkeeping, 'No task `%s`' % task_name
-        task_list = cls.bookkeeping[task_name]
-        task_list.finish_current_task()
+        if ACCOUNTING:
+            assert task_name in cls.bookkeeping, 'No task `%s`' % task_name
+            task_list = cls.bookkeeping[task_name]
+            task_list.finish_current_task()
 
     @classmethod
     def stats_to_dict(cls):
