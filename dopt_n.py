@@ -44,11 +44,11 @@ def check_paf_invariant(A, B):
     # only check half of sequence due to PAF symmetry
     Accounting.start_task('check_paf_invariant')
     v = len(A)
-    for s in xrange(1, len(A)//2):
+    for s in xrange(1, len(A)//2+1):
         Accounting.start_task('check_paf_invariant_step')
         paf_a = paf(A, s)
         paf_b = paf(B, s)
-        if not equal(paf_a + paf_b, 2):
+        if not paf_a + paf_b == 2:
             Accounting.finish_task('check_paf_invariant_step')
             Accounting.finish_task('check_paf_invariant')
             return False
@@ -147,11 +147,9 @@ if __name__ == '__main__':
 
     print "\bFound {0} sequences out of {1} possible.".format(len(matches), (2**N)**2)
 
-    if len(matches) > 0:
-        ex = random.choice(matches)
-        print "Random sequences"
-        print "A:", seq_to_str(ex[0])
-        print "B:", seq_to_str(ex[1])
+    for idx, match in enumerate(matches):
+        a, b = match
+        print "{:2}".format(idx), seq_to_str(a), seq_to_str(b)
 
     Accounting.print_stats()
     stats = Accounting.stats_to_dict()
