@@ -67,19 +67,14 @@ def check_psd_invariant(A, B):
     #
     cond = 2*v - 2
 
-    for k in xrange(1, v):
+    for k in xrange(1, v+1):
         Accounting.start_task('check_psd_invariant_step')
+        # trick here:
         # non negativity of PSD. we can discard before computing PSD both times
+        # but first I have to deal with rounding error. psd > cond with very
+        # low residual
         psd_a = psd(A, k)
-        if psd_a > cond:
-            Accounting.finish_task('check_psd_invariant_step')
-            Accounting.finish_task('check_psd_invariant')
-            return False
         psd_b = psd(B, k)
-        if psd_b > cond:
-            Accounting.finish_task('check_psd_invariant_step')
-            Accounting.finish_task('check_psd_invariant')
-            return False
         if not equal(psd_a + psd_b, cond):
             Accounting.finish_task('check_psd_invariant_step')
             Accounting.finish_task('check_psd_invariant')
