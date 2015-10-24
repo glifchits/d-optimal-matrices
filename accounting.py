@@ -163,13 +163,13 @@ class Accounting(object):
         for task in sorted(bk.keys()):
             task_list = bk[task]
             print("Task %s" % task)
-            print("  Times executed:", len(task_list))
+            print("  Times executed: {}".format(len(task_list)))
             print("  Min time: {0:.4f}s".format(task_list.get_min_time()))
             print("  Max time: {0:.4f}s".format(task_list.get_max_time()))
             print("  Avg time: {0:.4f}s".format(task_list.get_avg_time()))
             print("  Total time: {0:.4f}s".format(task_list.get_total_time()))
             print("   Std dev: {0:.4f}s".format(task_list.get_std_dev()))
-            print()
+            print("")
 
 
 def just_wait(seconds):
