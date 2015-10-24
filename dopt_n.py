@@ -84,7 +84,7 @@ def check_psd_invariant(A, B):
     return True
 
 
-def check_sequence_invariants(A, B):
+def check_sequence_invariants(aa, bb):
     Accounting.start_task('check_sequence_invariants')
     r = check_diophantine_invariant(aa, bb)
     if not r:
