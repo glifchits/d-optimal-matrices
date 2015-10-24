@@ -19,10 +19,10 @@ def seq_to_str(seq):
 
 
 def all_possible_sequences(n):
-    masks = [1 << j for j in xrange(n)]
+    masks = [1 << j for j in range(n)]
     seqs = []
-    for i in xrange(2 ** n):
-        yield [1 if (masks[j] & i) else -1 for j in xrange(n)]
+    for i in range(2 ** n):
+        yield [1 if (masks[j] & i) else -1 for j in range(n)]
 
 
 def check_diophantine_invariant(A, B):
@@ -44,7 +44,7 @@ def check_paf_invariant(A, B):
     # only check half of sequence due to PAF symmetry
     Accounting.start_task('check_paf_invariant')
     v = len(A)
-    for s in xrange(1, len(A)//2+1):
+    for s in range(1, len(A)//2+1):
         Accounting.start_task('check_paf_invariant_step')
         paf_a = paf(A, s)
         paf_b = paf(B, s)
@@ -67,7 +67,7 @@ def check_psd_invariant(A, B):
     #
     cond = 2*v - 2
 
-    for k in xrange(1, v+1):
+    for k in range(1, v+1):
         Accounting.start_task('check_psd_invariant_step')
         # trick here:
         # non negativity of PSD. we can discard before computing PSD both times
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     iterations = 0
     max_possible = (2**N)**2
 
-    print "max_possible:", max_possible
+    print("max_possible:", max_possible)
     iter_mod = max_possible // 23
 
     for aa in all_possible_sequences(N):
@@ -115,9 +115,9 @@ if __name__ == '__main__':
             iterations += 1
             percent_done = iterations / max_possible
             if iterations % iter_mod == 0 or iterations == max_possible:
-                print "Percent checked: {0:>7.3f}%    Matches found: {1}".format(
+                print("Percent checked: {0:>7.3f}%    Matches found: {1}".format(
                     percent_done * 100, len(matches)
-                )
+                ))
 
             Accounting.start_task('check_sequence')
             r = check_sequence_invariants(aa, bb)
@@ -129,14 +129,18 @@ if __name__ == '__main__':
             Accounting.finish_task('check_sequence')
 
     Accounting.finish_task('_program')
-    print "Done.\n"
+    print("Done.\n")
 
-    print "Found {0} sequences out of {1} possible.".format(len(matches), (2**N)**2)
+    print("Found {0} sequences out of {1} possible.".format(
+        len(matches), (2**N)**2)
+    )
 
     for idx, match in enumerate(matches):
         a, b = match
-        print "{:5}".format(idx+1), seq_to_str(a), seq_to_str(b)
+        print("{:5}".format(idx+1), seq_to_str(a), seq_to_str(b))
 
     Accounting.print_stats()
     stats = Accounting.stats_to_dict()
-    print "\nFound {0} sequences out of {1} possible.".format(len(matches), (2**N)**2)
+    print("\nFound {0} sequences out of {1} possible.".format(
+        len(matches), (2**N)**2)
+    )
