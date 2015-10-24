@@ -4,7 +4,6 @@ from __future__ import division
 import sys
 import math
 import random
-import reporting
 from lib import psd, paf
 from accounting import Accounting
 
@@ -156,4 +155,3 @@ if __name__ == '__main__':
 
     Accounting.print_stats()
     stats = Accounting.stats_to_dict()
-    reporting.post_to_google_sheets(stats)
