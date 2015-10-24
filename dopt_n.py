@@ -86,15 +86,15 @@ def check_psd_invariant(A, B):
 
 def check_sequence_invariants(aa, bb):
     Accounting.start_task('check_sequence_invariants')
-    r = check_diophantine_invariant(aa, bb)
-    if not r:
-        Accounting.finish_task('check_sequence_invariants')
-        return False
+    #r = check_diophantine_invariant(aa, bb)
+    #if not r:
+    #    Accounting.finish_task('check_sequence_invariants')
+    #    return False
     r = check_paf_invariant(aa, bb)
     if not r:
         Accounting.finish_task('check_sequence_invariants')
         return False
-    r = check_psd_invariant(aa, bb)
+    #r = check_psd_invariant(aa, bb)
     Accounting.finish_task('check_sequence_invariants')
     return r
 
@@ -128,23 +128,15 @@ if __name__ == '__main__':
             matches.append((aa, bb))
             Accounting.finish_task('check_sequence')
 
-            if max_possible > 10000000:
-                print "\nfound sequences!"
-                print "A:", seq_to_str(aa)
-                print "B:", seq_to_str(bb)
-                Accounting.finish_task('_program')
-                Accounting.finish_task('check_sequence')
-                Accounting.print_stats()
-                sys.exit()
-
     Accounting.finish_task('_program')
     print "Done.\n"
 
-    print "\bFound {0} sequences out of {1} possible.".format(len(matches), (2**N)**2)
+    print "Found {0} sequences out of {1} possible.".format(len(matches), (2**N)**2)
 
     for idx, match in enumerate(matches):
         a, b = match
-        print "{:2}".format(idx+1), seq_to_str(a), seq_to_str(b)
+        print "{:5}".format(idx+1), seq_to_str(a), seq_to_str(b)
 
     Accounting.print_stats()
     stats = Accounting.stats_to_dict()
+    print "\nFound {0} sequences out of {1} possible.".format(len(matches), (2**N)**2)
